@@ -18,24 +18,29 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Mengambil data dari frontend (tools.html)
-    const body = JSON.parse(event.body);
+    // Mengambil data binary mentah dari body yang dikirim oleh tools.html
+    const isBase64 = event.isBase64Encoded;
+    const requestBody = isBase64 ? Buffer.from(event.body, 'base64') : Buffer.from(event.body);
 
-    // Kirim data ke API Photoroom resmi menggunakan native fetch (lebih stabil untuk data besar)
+    // Mencari boundary text dari header untuk memisahkan data form
+    const contentType = event.headers['content-type'] || event.headers['Content-Type'];
+    const boundary = contentType.split('boundary=')[1];
+    
+    if (!boundary) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Format pengiriman data tidak valid.' }),
+      };
+    }
+
+    // Meneruskan seluruh data form-data mentah langsung ke API Photoroom
     const response = await fetch('https://image-api.photoroom.com/v2/edit', {
       method: 'POST',
       headers: {
         'x-api-key': apiKey,
-        'Content-Type': 'application/json',
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
       },
-      body: JSON.stringify({
-        imageUrl: body.imageUrl,
-        background: {
-          prompt: body.backgroundPrompt || 'clean studio background',
-        },
-        padding: body.padding || 0.15,
-        format: 'png',
-      }),
+      body: requestBody
     });
 
     if (!response.ok) {
@@ -46,7 +51,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Ambil hasil gambar dan ubah ke format Buffer secara aman
+    // Konversi hasil gambar dari Photoroom menjadi base64 string untuk dikirim kembali ke frontend
     const arrayBuffer = await response.arrayBuffer();
     const base64Image = Buffer.from(arrayBuffer).toString('base64');
 
