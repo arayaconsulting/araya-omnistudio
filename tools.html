@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Araya Consulting — AI OmniStudio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f9fafb; }
+        .active-card { border-color: #0d9488 !important; background-color: #f0fdfa !important; color: #0d9488 !important; }
+    </style>
+</head>
+<body class="min-h-screen py-6 px-4 flex flex-col items-center justify-start text-gray-800">
+
+    <!-- Container Utama Jalur Vertikal (Sempurna untuk iPad/HP) -->
+    <div class="w-full max-w-xl bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        
+        <!-- Header Aplikasi -->
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+            <div class="flex items-center gap-2 font-extrabold text-gray-700 text-sm tracking-tight">
+                <span class="w-2.5 h-2.5 rounded-full bg-teal-600"></span>
+                Araya Consulting | OmniStudio
+            </div>
+            <span class="text-xs bg-teal-50 text-teal-700 px-2.5 py-1 rounded-full font-bold">V4.0 Gratis</span>
+        </div>
+
+        <!-- Form Alur Kerja -->
+        <div class="p-6 space-y-6">
+            
+            <!-- 1. Unggah Foto Produk -->
+            <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">① Unggah Foto Produk Mentah</h3>
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center bg-gray-50 hover:bg-teal-50 hover:border-teal-400 transition cursor-pointer relative">
+                    <input type="file" id="imageUpload" class="hidden" accept="image/*" onchange="handleImageUpload(event)">
+                    <label for="imageUpload" class="cursor-pointer flex flex-col items-center justify-center py-4" id="uploadPlaceholder">
+                        <span class="text-3xl mb-1">📸</span>
+                        <span class="text-xs font-bold text-gray-500">Ambil atau Pilih Foto Produk</span>
+                    </label>
+                    <img id="imgMentah" class="hidden max-h-52 mx-auto rounded-lg shadow-sm">
+                </div>
+            </div>
+
+            <!-- 2. Kategori Produk (Preset Pintar tanpa ketik Prompt) -->
+            <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">② Jenis / Kategori Produk</h3>
+                <div class="grid grid-cols-2 gap-2 text-xs font-semibold">
+                    <div id="kat-kuliner" onclick="setKategori('kuliner')" class="p-3 border border-gray-200 rounded-xl bg-white cursor-pointer active-card flex items-center gap-2">🍲 Kuliner & Minuman</div>
+                    <div id="kat-fashion" onclick="setKategori('fashion')" class="p-3 border border-gray-200 rounded-xl bg-white cursor-pointer flex items-center gap-2">👕 Fashion & Pakaian</div>
+                    <div id="kat-skincare" onclick="setKategori('skincare')" class="p-3 border border-gray-200 rounded-xl bg-white cursor-pointer flex items-center gap-2">🧴 Skincare / Kosmetik</div>
+                    <div id="kat-umum" onclick="setKategori('umum')" class="p-3 border border-gray-200 rounded-xl bg-white cursor-pointer flex items-center gap-2">📦 Produk Umum / Lainnya</div>
+                </div>
+            </div>
+
+            <!-- 3. Atur Suasana Latar & Cahaya -->
+            <div class="grid grid-cols-2 gap-3 text-xs font-semibold">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">③ Tema Latar</label>
+                    <select id="bgTheme" class="w-full bg-white border border-gray-200 rounded-xl p-3 focus:outline-teal-500">
+                        <option value="luxury">Luxury (Marmer/Mewah)</option>
+                        <option value="rustic">Rustic (Meja Kayu Estetik)</option>
+                        <option value="nature">Nature (Daun & Alam)</option>
+                        <option value="minimalist">Minimalis Polos</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">④ Pencahayaan</label>
+                    <select id="lighting" class="w-full bg-white border border-gray-200 rounded-xl p-3 focus:outline-teal-500">
+                        <option value="bright">Bright / Terang Bersih</option>
+                        <option value="warm">Warm / Golden Hour</option>
+                        <option value="dramatic">Dramatic / Gelap Estetik</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 4. Pilih Rasio Gambar -->
+            <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">⑤ Pilih Rasio Foto</h3>
+                <div class="grid grid-cols-3 gap-2 text-xs font-bold text-center">
+                    <button onclick="setRatio('1:1', this)" class="ratio-btn p-3 border border-gray-200 rounded-xl bg-white active-card">⬜ 1:1 Feed</button>
+                    <button onclick="setRatio('9:16', this)" class="ratio-btn p-3 border border-gray-200 rounded-xl bg-white">📱 9:16 Story</button>
+                    <button onclick="setRatio('4:5', this)" class="ratio-btn p-3 border border-gray-200 rounded-xl bg-white">📐 4:5 Portrait</button>
+                </div>
+            </div>
+
+            <!-- 5. Tambah Logo Brand -->
+            <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">⑥ Watermark Logo Bisnis (Opsional)</h3>
+                <input type="file" id="logoUpload" class="w-full text-xs bg-gray-50 p-2.5 rounded-xl border border-gray-200 cursor-pointer" accept="image/*" onchange="handleLogoUpload(event)">
+            </div>
+
+            <!-- Tombol Proses -->
+            <button onclick="prosesStudioOmni()" class="w-full bg-teal-900 text-white font-bold text-sm py-4 rounded-xl shadow-lg hover:bg-teal-800 transition tracking-wide">
+                🚀 Hasilkan Foto & Caption Sekaligus
+            </button>
+        </div>
+
+        <!-- HASIL OUTPUT TERPADU (Di bawah tombol, otomatis terbuka saat sukses) -->
+        <div id="resultContainer" class="hidden border-t border-gray-100 bg-gray-50/50 p-6 space-y-6">
+            
+            <!-- Output Gambar -->
+            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm text-center">
+                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 text-left">Hasil Foto Studio AI</h4>
+                <div id="canvasWrapper" class="relative border border-gray-100 bg-white overflow-hidden mx-auto rounded-lg shadow-inner">
+                    <img id="imgMatang" class="w-full h-full object-cover">
+                    <img id="watermarkLogo" class="absolute bottom-2 right-2 max-h-6 object-contain opacity-80 hidden">
+                </div>
+                <a id="downloadLink" download="araya-studio.jpg" class="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 bg-teal-50 px-4 py-2 rounded-xl hover:bg-teal-100 transition">💾 Unduh Hasil Foto (HD)</a>
+            </div>
+
+            <!-- Output Caption -->
+            <div class="space-y-3">
+                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Hasil Salinan Teks (Caption)</h4>
+                
+                <div class="bg-white border border-gray-100 p-4 rounded-xl shadow-sm space-y-2">
+                    <div class="flex justify-between items-center"><span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full">Opsi Soft Selling / Storytelling</span><button onclick="salinTeks('captionSoft')" class="text-xs text-teal-600 font-bold hover:underline">📋 Salin</button></div>
+                    <p id="captionSoft" class="text-xs text-gray-600 leading-relaxed whitespace-pre-line font-medium"></p>
+                </div>
+
+                <div class="bg-white border border-gray-100 p-4 rounded-xl shadow-sm space-y-2">
+                    <div class="flex justify-between items-center"><span class="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full">Opsi Hard Selling / Promo Toko</span><button onclick="salinTeks('captionHard')" class="text-xs text-teal-600 font-bold hover:underline">📋 Salin</button></div>
+                    <p id="captionHard" class="text-xs text-gray-600 leading-relaxed whitespace-pre-line font-medium"></p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        let selectedKategori = "kuliner";
+        let selectedRatio = "1:1";
+        let base64Image = "";
+        let logoBase64 = "";
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('uploadPlaceholder').classList.add('hidden');
+                    const img = document.getElementById('imgMentah');
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                    base64Image = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    logoBase64 = e.target.result;
+                    document.getElementById('watermarkLogo').src = logoBase64;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function setKategori(kat) {
+            selectedKategori = kat;
+            document.querySelectorAll('[id^="kat-"]').forEach(el => el.classList.remove('active-card'));
+            document.getElementById(`kat-${kat}`).classList.add('active-card');
+        }
+
+        function setRatio(ratio, element) {
+            selectedRatio = ratio;
+            document.querySelectorAll('.ratio-btn').forEach(btn => btn.classList.remove('active-card'));
+            element.classList.add('active-card');
+        }
+
+        function salinTeks(id) {
+            navigator.clipboard.writeText(document.getElementById(id).innerText);
+            alert('Caption disalin!');
+        }
+
+        async function prosesStudioOmni() {
+            if (!base64Image) { alert('Harap unggah foto produk mentah dulu!'); return; }
+            
+            const resultBox = document.getElementById('resultContainer');
+            const canvas = document.getElementById('canvasWrapper');
+            const btnUtama = document.querySelector('button[onclick*="prosesStudioOmni"]');
+            
+            btnUtama.innerText = "⏳ Sedang Menyulap Materi Iklan...";
+            btnUtama.disabled = true;
+
+            if(selectedRatio === "1:1") { canvas.style.width = "220px"; canvas.style.height = "220px"; }
+            else if(selectedRatio === "9:16") { canvas.style.width = "140px"; canvas.style.height = "250px"; }
+            else if(selectedRatio === "4:5") { canvas.style.width = "190px"; canvas.style.height = "238px"; }
+
+            try {
+                const response = await fetch('/.netlify/functions/generate-photo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        image: base64Image, 
+                        theme: document.getElementById('bgTheme').value, 
+                        lighting: document.getElementById('lighting').value, 
+                        category: selectedKategori 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    btnUtama.innerText = "🚀 Hasilkan Foto & Caption Sekaligus";
+                    btnUtama.disabled = false;
+                    resultBox.classList.remove('hidden');
+                    
+                    document.getElementById('imgMatang').src = data.image;
+                    document.getElementById('downloadLink').href = data.image;
+                    
+                    const wl = document.getElementById('watermarkLogo');
+                    if(logoBase64) wl.classList.remove('hidden'); else wl.classList.add('hidden');
+
+                    document.getElementById('captionSoft').innerText = data.captionSoft;
+                    document.getElementById('captionHard').innerText = data.captionHard;
+                    
+                    // Otomatis scroll ke area hasil agar user tahu proses selesai
+                    resultBox.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('Gagal memproses gambar.');
+                    btnUtama.innerText = "🚀 Hasilkan Foto & Caption Sekaligus";
+                    btnUtama.disabled = false;
+                }
+            } catch (error) {
+                alert('Gangguan koneksi.');
+                btnUtama.innerText = "🚀 Hasilkan Foto & Caption Sekaligus";
+                btnUtama.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
