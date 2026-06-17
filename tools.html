@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .loading-spinner {
-            border: 3px solid f3f3f3;
+            border: 3px solid #f3f3f3;
             border-top: 3px solid #0d9488;
             border-radius: 50%;
             width: 24px;
@@ -26,7 +26,7 @@
         <!-- Header -->
         <div class="flex justify-between items-center border-b pb-4 mb-6">
             <div class="flex items-center space-x-2">
-                <span class="w-3 height-3 bg-teal-600 rounded-full inline-block"></span>
+                <span class="w-3 h-3 bg-teal-600 rounded-full inline-block"></span>
                 <h1 class="text-xl font-bold text-gray-800">Araya Consulting | OmniStudio</h1>
             </div>
             <span class="text-teal-600 font-semibold text-sm bg-teal-50 px-3 py-1 rounded-full">V4.0 Gratis</span>
@@ -135,7 +135,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT PROSES JALUR UTAMA (NETLIFY FUNCTIONS) -->
+    <!-- SCRIPT UTAMA: SINKRONISASI RINGAN FORMDATA -->
     <script>
         const productImageInput = document.getElementById('productImage');
         const imagePreview = document.getElementById('imagePreview');
@@ -160,44 +160,37 @@
             }
         });
 
-        // Proses Submit Form ke Netlify Backend
+        // Proses Jalur FormData (Sangat Stabil & Ringan)
         studioForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Ubah tombol ke mode loading
             submitBtn.disabled = true;
             submitBtn.innerHTML = `
                 <div class="loading-spinner"></div>
-                <span class="ml-2">Sedang Membaca Gambar & Merender AI...</span>
+                <span class="ml-2">Sedang Memproses Gambar & Merender AI...</span>
             `;
 
             const selectedTheme = document.getElementById('themePrompt').value;
             const selectedLighting = document.getElementById('lighting').value;
             const combinedPrompt = `${selectedTheme}, ${selectedLighting}`;
+            const file = productImageInput.files[0];
+
+            // Masukkan data ke format objek Form standar (bukan teks panjang base64)
+            const formData = new FormData();
+            formData.append('imageFile', file);
+            formData.append('backgroundPrompt', combinedPrompt);
 
             try {
-                // Konversi foto produk ke base64 string
-                const file = productImageInput.files[0];
-                const base64String = await toBase64(file);
-
-                // --- JALUR KOMUNIKASI RESMI NETLIFY FUNCTIONS ---
                 const response = await fetch('/.netlify/functions/generate-photo', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        imageUrl: base64String,
-                        backgroundPrompt: combinedPrompt,
-                        padding: 0.15
-                    })
+                    body: formData
                 });
 
-                if (!response.ok) {
-                    throw new Error('Gagal berkomunikasi dengan mesin Photoroom.');
-                }
-
                 const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Terjadi penolakan pada sistem server.');
+                }
 
                 // Tampilkan Hasil Gambar Render AI
                 resultImage.src = data.image;
@@ -206,32 +199,20 @@
                 const activeCategory = document.querySelector('input[name="category"]:checked').value;
                 resultCaption.value = generateClientCaption(activeCategory);
 
-                // Tampilkan container hasil
                 outputSection.classList.remove('hidden');
                 outputSection.scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) {
-                alert('Gangguan koneksi: ' + error.message);
+                alert('Gangguan sistem: ' + error.message);
             } finally {
-                // Kembalikan tombol ke kondisi semula
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `<span>⏳ Sedang Menyulap Materi Iklan...</span>`;
             }
         });
 
-        // Helper: Mengubah file gambar ke Base64 Data URL
-        function toBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-        }
-
         // Helper: Generator Caption Berdasarkan Pilihan Kategori
         function generateClientCaption(category) {
-            const hashtags = "\n\n#ArayaOmniStudio #BisnisKuliner #MarketingAI #FotoProduk Premium";
+            const hashtags = "\n\n#ArayaOmniStudio #BisnisKuliner #MarketingAI #FotoProdukPremium";
             if (category === 'kuliner') {
                 return "Rasa premium, penampilan bintang lima! ✨\n\nSetiap gigitan dibuat dari bahan pilihan terbaik untuk memanjakan lidah Anda. Cocok menemani momen spesial atau sekadar melepaskan penat hari ini.\n\n🎯 Pesan sekarang via tautan di bio kami!" + hashtags;
             } else if (category === 'skincare') {
