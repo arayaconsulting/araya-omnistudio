@@ -10,18 +10,20 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const apiKey = process.env.PHOTOROOM_API_KEY;
+    // Membaca API Key dengan toleransi variasi nama variabel di Netlify
+    const apiKey = process.env.PHOTOROOM_API_KEY || process.env.photoroom_api_key || process.env.ApiKey;
+    
     if (!apiKey) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Kunci API Photoroom belum diatur di Netlify.' }),
+        body: JSON.stringify({ error: 'Kunci API Photoroom belum terbaca di Netlify.' }),
       };
     }
 
     // Mengambil data yang dikirim dari frontend (tools.html)
     const body = JSON.parse(event.body);
 
-    // Kirim data ke API Photoroom
+    // Kirim data ke API Photoroom resmi
     const response = await fetch('https://image-api.photoroom.com/v2/edit', {
       method: 'POST',
       headers: {
@@ -33,16 +35,16 @@ exports.handler = async (event, context) => {
         background: {
           prompt: body.backgroundPrompt || 'clean studio background',
         },
-        padding: body.padding || 0.1,
+        padding: body.padding || 0.15,
         format: 'png',
       }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       return {
         statusCode: response.status,
-        body: JSON.stringify({ error: errorData.message || 'Gagal memproses gambar di Photoroom.' }),
+        body: JSON.stringify({ error: errorData.message || 'Ditolak oleh Photoroom. Pastikan API Key aktif.' }),
       };
     }
 
