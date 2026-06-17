@@ -1,33 +1,47 @@
 exports.handler = async (event, context) => {
+  // Hanya izinkan metode POST
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method Not Allowed' }) };
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method Not Allowed' }),
+    };
   }
 
   try {
+    // Membaca API Key Photoroom dari Netlify
     const apiKey = process.env.PHOTOROOM_API_KEY;
+    
     if (!apiKey) {
-      return { statusCode: 500, body: JSON.stringify({ error: 'API Key belum terbaca di Netlify.' }) };
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Kunci API Photoroom belum terbaca di Netlify.' }),
+      };
     }
 
-    // Membaca data json yang dikirim dari tools.html
+    // Mengambil data JSON dari frontend
     const body = JSON.parse(event.body);
-    
-    // Membersihkan header Base64 jika ada agar hanya tersisa teks murni gambarnya
-    const base64Data = body.image.replace(/^data:image\/\w+;base64,/, "");
-    const imageBuffer = Buffer.from(base64Data, 'base64');
+    if (!body.image) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Data gambar tidak ditemukan.' }),
+      };
+    }
 
-    // Membuat objek FormData standar untuk dikirim ke API Photoroom resmi
-    const formData = new FormData();
-    formData.append('imageFile', new Blob([imageBuffer], { type: 'image/png' }), 'image.png');
-    formData.append('background.prompt', body.backgroundPrompt || 'clean studio background');
-    formData.append('padding', '0.15');
-
+    // Mengirimkan request ke Photoroom dengan format JSON resmi sesuai dokumentasi Photoroom
     const response = await fetch('https://image-api.photoroom.com/v2/edit', {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json',
       },
-      body: formData
+      body: JSON.stringify({
+        imageUrl: body.image, // Mengirim string base64 data URI langsung
+        background: {
+          prompt: body.backgroundPrompt || 'clean studio background',
+        },
+        padding: 0.15,
+        format: 'png'
+      }),
     });
 
     if (!response.ok) {
@@ -38,15 +52,23 @@ exports.handler = async (event, context) => {
       };
     }
 
+    // Mengonversi hasil gambar binary dari Photoroom kembali ke Base64 untuk frontend
     const arrayBuffer = await response.arrayBuffer();
-    const resultBase64 = Buffer.from(arrayBuffer).toString('base64');
+    const base64Image = Buffer.from(arrayBuffer).toString('base64');
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: `data:image/png;base64,${resultBase64}` }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        image: `data:image/png;base64,${base64Image}`,
+      }),
     };
   } catch (error) {
-    return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Terjadi kesalahan internal server: ' + error.message }),
+    };
   }
 };
