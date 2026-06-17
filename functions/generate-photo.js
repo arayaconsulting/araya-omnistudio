@@ -1,5 +1,3 @@
-const fetch = require('node-fetch');
-
 exports.handler = async (event, context) => {
   // Hanya izinkan metode POST
   if (event.httpMethod !== 'POST') {
@@ -10,8 +8,8 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Membaca API Key dengan toleransi variasi nama variabel di Netlify
-    const apiKey = process.env.PHOTOROOM_API_KEY || process.env.photoroom_api_key || process.env.ApiKey;
+    // Membaca API Key yang sudah Anda simpan di Netlify
+    const apiKey = process.env.PHOTOROOM_API_KEY;
     
     if (!apiKey) {
       return {
@@ -20,10 +18,10 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Mengambil data yang dikirim dari frontend (tools.html)
+    // Mengambil data dari frontend (tools.html)
     const body = JSON.parse(event.body);
 
-    // Kirim data ke API Photoroom resmi
+    // Kirim data ke API Photoroom resmi menggunakan native fetch (lebih stabil untuk data besar)
     const response = await fetch('https://image-api.photoroom.com/v2/edit', {
       method: 'POST',
       headers: {
@@ -41,16 +39,16 @@ exports.handler = async (event, context) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorText = await response.text();
       return {
         statusCode: response.status,
-        body: JSON.stringify({ error: errorData.message || 'Ditolak oleh Photoroom. Pastikan API Key aktif.' }),
+        body: JSON.stringify({ error: `Ditolak Photoroom (${response.status}): ${errorText}` }),
       };
     }
 
-    // Ambil hasil gambar dalam bentuk buffer/binary
-    const imageBuffer = await response.buffer();
-    const base64Image = imageBuffer.toString('base64');
+    // Ambil hasil gambar dan ubah ke format Buffer secara aman
+    const arrayBuffer = await response.arrayBuffer();
+    const base64Image = Buffer.from(arrayBuffer).toString('base64');
 
     return {
       statusCode: 200,
